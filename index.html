@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake Master Staking</title>
+  <script src="https://unpkg.com/anchor-link@3"></script>
+  <script src="https://unpkg.com/anchor-link-browser-transport@3"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+    }
+    header {
+      background: #161b22;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #30363d;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      color: #58a6ff;
+    }
+    .menu-btn {
+      cursor: pointer;
+      font-size: 24px;
+      user-select: none;
+      transition: transform 0.3s ease;
+    }
+    .menu-btn:hover { transform: rotate(90deg); }
+    .sidebar {
+      position: fixed;
+      left: -250px;
+      top: 0;
+      height: 100%;
+      width: 250px;
+      background: #161b22;
+      transition: left 0.4s ease;
+      padding-top: 60px;
+      box-shadow: 2px 0 6px rgba(0,0,0,0.6);
+      z-index: 1000;
+    }
+    .sidebar.active { left: 0; }
+    .sidebar a {
+      display: block;
+      padding: 15px 20px;
+      text-decoration: none;
+      color: #c9d1d9;
+      transition: background 0.3s ease, padding-left 0.3s ease;
+    }
+    .sidebar a:hover {
+      background: #21262d;
+      padding-left: 30px;
+    }
+    .content {
+      padding: 20px;
+      animation: fadeIn 0.8s ease;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    .banner {
+      width: 100%;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      transition: transform 0.4s ease;
+    }
+    .banner:hover { transform: scale(1.02); }
+    .btn {
+      background: #238636;
+      border: none;
+      padding: 12px 20px;
+      margin: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .btn:hover { background: #2ea043; transform: translateY(-2px); }
+    .nft-list { margin-top: 20px; }
+    .nft-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      margin: 10px 0;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      transition: transform 0.3s ease;
+    }
+    .nft-card:hover { transform: scale(1.02); }
+    .nft-card img {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      margin-right: 15px;
+    }
+    /* Setting Modal */
+    #settingModal {
+      display:none;
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.7); backdrop-filter:blur(5px);
+      justify-content:center; align-items:center; z-index:2000;
+    }
+    #settingModal .box {
+      background:#161b22; padding:20px; border-radius:12px;
+      width:300px; text-align:center; color:#c9d1d9;
+      animation:fadeIn 0.4s ease;
+    }
+    #settingModal select {
+      background:#0d1117; color:#e6edf3; padding:10px;
+      border-radius:8px; border:1px solid #30363d;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🐍 Snake Master</h1>
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+  </header>
+
+  <div class="sidebar" id="sidebar">
+    <a href="#" onclick="stake()" data-id="stake">Stake NFT</a>
+    <a href="#" onclick="unstake()" data-id="unstake">Unstake NFT</a>
+    <a href="#" onclick="getMyStake()" data-id="mystake">My Stake</a>
+    <a href="#" onclick="claim()" data-id="claim">Claim Reward</a>
+    <a href="https://neftyblocks.com/collection/packbadgesnk/drops" target="_blank" data-id="shop">Shop</a>
+    <a href="#" onclick="openSetting()" data-id="setting">⚙️ Setting</a>
+    <a href="#" data-id="leaderboard">Leaderboard</a>
+  </div>
+
+  <!-- Setting Modal -->
+  <div id="settingModal">
+    <div class="box">
+      <h3>⚙️ <span id="settingTitle">Pengaturan</span></h3>
+      <p id="chooseLang">Pilih Bahasa:</p>
+      <select id="langSelect" onchange="setLanguage()">
+        <option value="id">🇮🇩 Indonesia</option>
+        <option value="en">🇺🇸 English</option>
+      </select>
+      <br><br>
+      <button class="btn" onclick="closeSetting()" id="closeBtn">Tutup</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <img class="banner" src="https://ipfs.io/ipfs/bafybeiejdkgnx634gwsmqxlnxu3zjb633wudxscurlgfvantjdua3w66sa" alt="Banner">
+    <button class="btn" onclick="login()" id="connectBtn">🔑 Connect Wallet</button>
+
+    <div class="nft-list">
+      <div class="nft-card">
+        <img src="https://ipfs.io/ipfs/bafybeidhejyt2tm26pjdicjbhnlisoxrnomjwj2riq5rg7dc2sxgg6yvpa">
+        <div>Hatchling Fang</div>
+      </div>
+      <div class="nft-card">
+        <img src="https://ipfs.io/ipfs/bafybeibjaa3nyldogey6ebmkxl5z3rcpmivfko25hfgehexci7s5kns34q">
+        <div>Azure Fang</div>
+      </div>
+      <div class="nft-card">
+        <img src="https://ipfs.io/ipfs/bafybeiehrgnkwyhfacyvya6cxjrldn4sz5or3b6fmaz5e7p6f3fsgbtwgq">
+        <div>Obsidian Fang</div>
+      </div>
+      <div class="nft-card">
+        <img src="https://ipfs.io/ipfs/bafybeieh7lnwriowexixps23ete2bgwni5cy2ms7k7yqxz7gpn7zsqpb74">
+        <div>Vortex Fang</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById("sidebar").classList.toggle("active");
+    }
+
+    function openSetting() {
+      document.getElementById("settingModal").style.display = "flex";
+    }
+    function closeSetting() {
+      document.getElementById("settingModal").style.display = "none";
+    }
+
+    // Anchor Wallet Connect
+    const transport = new AnchorLinkBrowserTransport();
+    const link = new AnchorLink({
+      transport,
+      chains: [
+        {
+          chainId: "1064487b3cd1a897ce03ae5b6a865651747e2e8d7fddbfb6a8fbdc0583e68c32",
+          nodeUrl: "https://wax.greymass.com"
+        }
+      ]
+    });
+
+    let session;
+
+    async function login() {
+      try {
+        // FIXED: sebelumnya ada "file:///storage..." salah → cukup string nama session
+        const result = await link.login("snakeapp-session");
+        session = result.session;
+        alert("✅ Connected: " + session.auth.actor.toString());
+      } catch (err) {
+        alert("❌ Login failed: " + err.message);
+      }
+    }
+
+    async function stake() {
+      if (!session) return alert("Connect wallet dulu!");
+      try {
+        await session.transact({
+          actions: [{
+            account: "waxdaofarmer",
+            name: "stake",
+            authorization: [session.auth],
+            data: { farmer: session.auth.actor.toString(), farm_id: 1092 }
+          }]
+        });
+        alert("✅ Stake berhasil!");
+      } catch (err) { alert("❌ " + err.message); }
+    }
+
+    async function unstake() {
+      if (!session) return alert("Connect wallet dulu!");
+      try {
+        await session.transact({
+          actions: [{
+            account: "waxdaofarmer",
+            name: "unstake",
+            authorization: [session.auth],
+            data: { farmer: session.auth.actor.toString(), farm_id: 1092 }
+          }]
+        });
+        alert("✅ Unstake berhasil!");
+      } catch (err) { alert("❌ " + err.message); }
+    }
+
+    async function claim() {
+      if (!session) return alert("Connect wallet dulu!");
+      try {
+        await session.transact({
+          actions: [{
+            account: "waxdaofarmer",
+            name: "claim",
+            authorization: [session.auth],
+            data: { farmer: session.auth.actor.toString(), farm_id: 1092 }
+          }]
+        });
+        alert("✅ Claim reward berhasil!");
+      } catch (err) { alert("❌ " + err.message); }
+    }
+
+    async function getMyStake() {
+      if (!session) return alert("Connect wallet dulu!");
+      try {
+        let response = await fetch("https://wax.greymass.com/v1/chain/get_table_rows", {
+          method: "POST",
+          body: JSON.stringify({
+            json: true,
+            code: "waxdaofarmer",
+            scope: "waxdaofarmer",
+            table: "stakes",
+            lower_bound: session.auth.actor.toString(),
+            upper_bound: session.auth.actor.toString(),
+            limit: 1
+          })
+        });
+        let data = await response.json();
+        alert("📊 My Stake: " + JSON.stringify(data.rows));
+      } catch (err) {
+        alert("❌ " + err.message);
+      }
+    }
+
+    // Multi Bahasa
+    const texts = {
+      id: {
+        stake: "Stake NFT",
+        unstake: "Unstake NFT",
+        mystake: "Stake Saya",
+        claim: "Klaim Reward",
+        shop: "Toko",
+        setting: "⚙️ Pengaturan",
+        leaderboard: "Papan Peringkat",
+        connect: "🔑 Hubungkan Wallet",
+        settingTitle: "Pengaturan",
+        chooseLang: "Pilih Bahasa:",
+        close: "Tutup"
+      },
+      en: {
+        stake: "Stake NFT",
+        unstake: "Unstake NFT",
+        mystake: "My Stake",
+        claim: "Claim Reward",
+        shop: "Shop",
+        setting: "⚙️ Setting",
+        leaderboard: "Leaderboard",
+        connect: "🔑 Connect Wallet",
+        settingTitle: "Settings",
+        chooseLang: "Choose Language:",
+        close: "Close"
+      }
+    };
+
+    function setLanguage() {
+      let lang = document.getElementById("langSelect").value;
+      localStorage.setItem("lang", lang);
+      applyLanguage(lang);
+      closeSetting();
+    }
+
+    function applyLanguage(lang) {
+      document.querySelectorAll(".sidebar a").forEach(a => {
+        let key = a.getAttribute("data-id");
+        if (texts[lang][key]) a.innerText = texts[lang][key];
+      });
+      document.getElementById("connectBtn").innerText = texts[lang].connect;
+      document.getElementById("settingTitle").innerText = texts[lang].settingTitle;
+      document.getElementById("chooseLang").innerText = texts[lang].chooseLang;
+      document.getElementById("closeBtn").innerText = texts[lang].close;
+    }
+
+    // Load bahasa terakhir
+    window.onload = () => {
+      let lang = localStorage.getItem("lang") || "id";
+      document.getElementById("langSelect").value = lang;
+      applyLanguage(lang);
+    };
+  </script>
+</body>
+</html>
